@@ -1,0 +1,42 @@
+version: "3.7"
+services: 
+    goapp:
+        container_name: goapp
+        hostname: goapp
+        build:
+            context: ./go/build
+        tty: true # コンテナの永続化
+        stdin_open: true
+        command: /bin/bash
+        volumes:
+            - ./go/cmd:/go/src/app # マウントディレクトリ
+        networks:
+            goappnet:
+                ipv4_address: ${GO_CONTAINER_IP}
+    mysql:
+        container_name: gomysql
+        hostname: gomysql
+        build:
+            context: ./mysql
+        networks:
+            goappnet:
+                ipv4_address: ${MYSQL_CONTAINER_IP}
+        ports:
+            - ${MYSQL_PORT}:3306
+        volumes:
+            - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+            - ./data/mysql:/var/lib/mysql
+            - ./log/mysql:/var/log/mysql
+        environment:
+            MYSQL_DATABASE: ${MYSQL_DB_NAME}
+            MYSQL_USER: ${MYSQL_DB_USER}
+            MYSQL_PASSWORD: ${MYSQL_DB_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${MYSQL_DB_ROOT_PASSWORD}
+            TZ: ${TIMEZONE}
+networks:
+    goappnet:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+            - subnet: ${NETWORK_SUBNET}
